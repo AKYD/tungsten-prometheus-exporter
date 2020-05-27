@@ -106,6 +106,7 @@ A metric is described with the following attributes:
  * json_path: a JSON path expression to target the metric in the json
  * labels_from_path: add metric labels based on the attribute path
  * append_field_name: append the target attribute to the metric name (default: `true`)
+ * make_label: extract string attributes as labels (default: `false`)
 
 Look at `./examples` directory for metrics examples.
 

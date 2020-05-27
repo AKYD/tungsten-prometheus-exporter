@@ -10,7 +10,7 @@ from requests.adapters import HTTPAdapter
 from keystoneauth1.session import Session
 
 from jsonpath_rw import parse, Fields
-from prometheus_client import Enum
+from prometheus_client import Gauge, Enum
 
 from tungsten_prometheus_exporter.utils import my_import
 from tungsten_prometheus_exporter.scrape import Scraper, StopScrape
@@ -43,6 +43,7 @@ class MetricInstance:
         uve_instance,
         labels_from_path={},
         append_field_name=True,
+        make_label=False,
         kwargs={},
     ):
         self.host = Config().analytics.host
@@ -51,6 +52,7 @@ class MetricInstance:
         self.name = name
         self.type = type
         self.desc = desc
+        self.make_label = make_label
         self.uve_type = uve_type
         self.uve_module = uve_module
         self.uve_instance = uve_instance
@@ -74,6 +76,9 @@ class MetricInstance:
     def _get_metric(self, match):
         metric_name = self._metric_name(match)
         if metric_name not in METRICS_REGISTRY:
+            if self.make_label:
+                self._labels.append("last")
+
             METRICS_REGISTRY[metric_name] = self._metric_class(
                 metric_name, self.desc, self._labels, **self.kwargs
             )
@@ -85,8 +90,12 @@ class MetricInstance:
             labels.append((label, str(match.full_path).split(".")[index]))
         if isinstance(metric, Enum):
             metric.labels(**dict(labels)).state(match.value)
-        else:
-            metric.labels(**dict(labels)).set(match.value)
+        elif isinstance(metric, Gauge):
+            if self.make_label:
+                labels.append(("last", match.value))
+                metric.labels(**dict(labels)).set(1)
+            else:
+                metric.labels(**dict(labels)).set(match.value)
 
     # called from instance scraper
     def update(self, data):

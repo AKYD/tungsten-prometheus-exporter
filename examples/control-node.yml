@@ -1,0 +1,42 @@
+metrics:
+- append_field_name: true
+  json_path: process_status[*].instance_id
+  name: control_process_status_info
+  type: Gauge
+  make_label: True
+  labels_from_path:
+    index: 1
+  uve_module: NodeStatus
+  uve_type: control-node
+
+- append_field_name: true
+  json_path: process_status[*].module_id
+  name: control_process_status_info
+  type: Gauge
+  make_label: True
+  labels_from_path:
+    index: 1
+  uve_module: NodeStatus
+  uve_type: control-node
+
+- append_field_name: false
+  json_path: process_status[*].connection_infos[*].status
+  name: control_state
+  type: Gauge
+  make_label: True
+  labels_from_path:
+    index: 1
+    connection: 3
+  uve_module: NodeStatus
+  uve_type: control-node
+
+- append_field_name: false
+  json_path: process_status[*].connection_infos[*].server_addrs[*]
+  name: control_connection_info_server_addr
+  type: Gauge
+  make_label: True
+  labels_from_path:
+    index: 1
+    connection: 3
+  uve_module: NodeStatus
+  uve_type: control-node

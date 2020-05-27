@@ -16,6 +16,7 @@ _metric_template = {
     "type": confuse.Choice(choices=["Enum", "Gauge"]),
     "desc": confuse.String(default=""),
     "kwargs": Dict(default={}),
+    "make_label": confuse.Choice(choices=[True, False], default=False),
     "uve_type": confuse.String(),
     "uve_module": confuse.String(),
     "uve_instances": confuse.StrSeq(default=[]),
