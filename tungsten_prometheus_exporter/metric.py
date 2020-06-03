@@ -1,5 +1,6 @@
 from collections import UserList, UserDict
 import logging
+import copy
 
 from gevent.pool import Pool, Group
 
@@ -75,12 +76,14 @@ class MetricInstance:
 
     def _get_metric(self, match):
         metric_name = self._metric_name(match)
+        self.tmp_labels = {}
         if metric_name not in METRICS_REGISTRY:
             if self.make_label:
-                self._labels.append("last")
-
+                self.tmp_labels = [ *self._labels, str(match.full_path).split(".")[-1] ]
+            else:
+                self.tmp_labels = self._labels
             METRICS_REGISTRY[metric_name] = self._metric_class(
-                metric_name, self.desc, self._labels, **self.kwargs
+                metric_name, self.desc, self.tmp_labels, **self.kwargs
             )
         return METRICS_REGISTRY[metric_name]
 
@@ -92,7 +95,7 @@ class MetricInstance:
             metric.labels(**dict(labels)).state(match.value)
         elif isinstance(metric, Gauge):
             if self.make_label:
-                labels.append(("last", match.value))
+                labels.append((str(match.full_path).split(".")[-1], match.value))
                 metric.labels(**dict(labels)).set(1)
             else:
                 metric.labels(**dict(labels)).set(match.value)
@@ -100,8 +103,8 @@ class MetricInstance:
     # called from instance scraper
     def update(self, data):
         if self.uve_module in data:
-            labels = [(self.uve_type.replace("-", "_"), self.uve_instance)]
             for match in self._path_expr.find(data[self.uve_module]):
+                labels = [(self.uve_type.replace("-", "_"), self.uve_instance)]
                 self._update_metric(match, labels)
         else:
             logger.warning("No match of %s on %s" % (self.json_path, self.url))
