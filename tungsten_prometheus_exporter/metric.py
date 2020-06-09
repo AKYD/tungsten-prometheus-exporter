@@ -79,7 +79,10 @@ class MetricInstance:
         self.tmp_labels = {}
         if metric_name not in METRICS_REGISTRY:
             if self.make_label:
-                self.tmp_labels = [ *self._labels, str(match.full_path).split(".")[-1] ]
+                if self.append_field_name:
+                    self.tmp_labels = [ *self._labels, str(match.full_path).split(".")[-1] ]
+                else:
+                    self.tmp_labels = [ *self._labels, "last" ]
             else:
                 self.tmp_labels = self._labels
             METRICS_REGISTRY[metric_name] = self._metric_class(
@@ -95,7 +98,10 @@ class MetricInstance:
             metric.labels(**dict(labels)).state(match.value)
         elif isinstance(metric, Gauge):
             if self.make_label:
-                labels.append((str(match.full_path).split(".")[-1], match.value))
+                if self.append_field_name:
+                    labels.append((str(match.full_path).split(".")[-1], match.value))
+                else:
+                    labels.append(("last", match.value))
                 metric.labels(**dict(labels)).set(1)
             else:
                 metric.labels(**dict(labels)).set(match.value)
